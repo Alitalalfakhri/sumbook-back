@@ -12,13 +12,13 @@ dotenv.config();
 const router = express.Router();
 
 const firebaseConfig = {
-  apiKey: process.env.FIREBASE_API_KEY,
-  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.FIREBASE_PROJECT_ID,
-  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.FIREBASE_APP_ID,
-  measurementId: process.env.FIREBASE_MEASUREMENT_ID,
+  apiKey: "AIzaSyDh1UQ92aWOpYJsCTaYEn66J7V9Pdqvfd4",
+  authDomain: "sumbook-ali.firebaseapp.com",
+  projectId: "sumbook-ali",
+  storageBucket: "sumbook-ali.firebasestorage.app",
+  messagingSenderId: "255469526663",
+  appId: "1:255469526663:web:60650ecfe8a63c592b2222",
+  measurementId: "G-5PDNMHYS02"
 };
 
 // Initialize Firebase
