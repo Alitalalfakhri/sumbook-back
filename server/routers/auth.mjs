@@ -6,7 +6,7 @@ import EmailUser from '../shemas/EmailUser.mjs';
 import GoogleUser from '../shemas/GoogleUser.mjs'
 import bcrypt from 'bcrypt'; // Import bcrypt for password hashing
 import dotenv from 'dotenv';
-
+import cors from "cors";
 dotenv.config();
 
 const router = express.Router();
