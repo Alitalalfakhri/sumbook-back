@@ -19,7 +19,7 @@ dotenv.config()
 const app = express();
 
 const corsOptions = {
-  origin: ['https://sumbook-front.vercel.app', 'http://localhost:3000'], // Explicit domains
+  origin: ['https://sumbook-front.vercel.app', 'http://localhost:3000' , "https://sumbook-front.vercel.app"], // Explicit domains
   credentials: true, // Required for cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow needed methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow needed headers
