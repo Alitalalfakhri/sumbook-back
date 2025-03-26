@@ -11,7 +11,6 @@ dotenv.config();
 
 const router = express.Router();
 
-router.options('*', cors()); 
 
 const firebaseConfig = {
   apiKey: "AIzaSyDh1UQ92aWOpYJsCTaYEn66J7V9Pdqvfd4",
