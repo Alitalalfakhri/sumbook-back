@@ -74,7 +74,7 @@ router.post(
       res.status(200).json({
         message: 'User created successfully!',
         user: {
-          uid: user.uid,
+          uid: req.session.userId,
           email: user.email,
         },
       });
