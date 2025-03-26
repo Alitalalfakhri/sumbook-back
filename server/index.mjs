@@ -41,7 +41,7 @@ app.use(session({
   ,
   cookie:{
      secure: true, // Must be true for HTTPS
-    samesite:none,
+    samesite:"Lax",
    
     httpOnly: true, // Recommended for security
     maxAge: 1000 * 60 * 60 * 24 * 30,
