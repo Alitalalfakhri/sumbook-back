@@ -19,23 +19,23 @@ dotenv.config()
 const app = express();
 
 const corsOptions = {
-  origin: [
-    'https://sumbook-front-end.vercel.app', 
-    'http://localhost:3000'
-  ],
-  credentials: true,
+  origin: 'https://sumbook-front-end.vercel.app', // Allow only your frontend
+  credentials: true, // Allow sending cookies
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['set-cookie']
+  exposedHeaders: ['set-cookie'],
+  optionsSuccessStatus: 204 // Ensure preflight requests pass
 };
 
 app.use(cors(corsOptions));
-app.options('*', cors(corsOptions)); // Handle preflight
+app.options('*', cors(corsOptions)); // ✅ Handle preflight requests
 
+// ✅ 2. Middleware setup (Correct Order)
 app.use(express.json());
-app.use(bodyParser.json())
-app.use(cookieParser())
+app.use(bodyParser.json());
+app.use(cookieParser());
 
+// ✅ 3. Session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET || "dwkqjqiojkm",
   resave: false,
@@ -45,17 +45,19 @@ app.use(session({
     ttl: 14 * 24 * 60 * 60 // 14 days
   }),
   cookie: {
-    secure: true,         // Must be true for production
-    sameSite: 'none',     // Required for cross-domain
+    secure: true, // Required for HTTPS
+    sameSite: 'none', // Required for cross-origin cookies
     httpOnly: true,
-    maxAge: 14 * 24 * 60 * 60 * 1000,
-    domain: '.railway.app' // Important for cross-subdomain
+    maxAge: 14 * 24 * 60 * 60 * 1000
   }
 }));
-app.use(authentication)
-app.use(cartRouter)
-app.use(booksRouter)
-app.use(ordersRouter)
+
+// ✅ 4. Routers (After session & CORS)
+app.use(authentication);
+app.use(cartRouter);
+app.use(booksRouter);
+app.use(ordersRouter);
+
 
 const port = process.env.PORT || 4000;
 
