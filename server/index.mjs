@@ -40,8 +40,10 @@ app.use(session({
   })
   ,
   cookie:{
-    secure:false,
-    maxAge:1000* 60 * 60 *24 * 30
+     secure: true, // Must be true for HTTPS
+    sameSite: 'none', // Required for cross-site
+    httpOnly: true, // Recommended for security
+    maxAge: 1000 * 60 * 60 * 24 * 30,
   }
 }))
 app.use(authentication)
