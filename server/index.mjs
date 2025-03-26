@@ -19,34 +19,39 @@ dotenv.config()
 const app = express();
 
 const corsOptions = {
-  origin: ['https://sumbook-front-end.vercel.app', 'http://localhost:3000'  ], // Explicit domains
-  credentials: true, // Required for cookies
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow needed methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow needed headers
+  origin: [
+    'https://sumbook-front-end.vercel.app', 
+    'http://localhost:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['set-cookie']
 };
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Handle preflight
+
 app.use(express.json());
 app.use(bodyParser.json())
 app.use(cookieParser())
 
 app.use(session({
-  secret:"dwkqjqiojkm",
-  resave:false,
-  saveUninitialized:false,
-  store:MongoStore.create({
-    mongoUrl:"mongodb+srv://alitalalfakhri0009:5HDPv8IIAXjF6BPh@cluster0.6s52p.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
-    ttl:1000 *60 * 60 *24 * 30
-  })
-  ,
-  cookie:{
-     secure: true, // Must be true for HTTPS
-    samesite:"Lax",
-   
-    httpOnly: true, // Recommended for security
-    maxAge: 1000 * 60 * 60 * 24 * 30,
+  secret: process.env.SESSION_SECRET || "dwkqjqiojkm",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: "mongodb+srv://alitalalfakhri0009:5HDPv8IIAXjF6BPh@cluster0.6s52p.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",
+    ttl: 14 * 24 * 60 * 60 // 14 days
+  }),
+  cookie: {
+    secure: true,         // Must be true for production
+    sameSite: 'none',     // Required for cross-domain
+    httpOnly: true,
+    maxAge: 14 * 24 * 60 * 60 * 1000,
+    domain: '.railway.app' // Important for cross-subdomain
   }
-}))
+}));
 app.use(authentication)
 app.use(cartRouter)
 app.use(booksRouter)
