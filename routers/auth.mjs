@@ -2,10 +2,11 @@ import express from 'express';
 import { initializeApp } from 'firebase/app';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { body, validationResult } from 'express-validator';
-import EmailUser from '../shemas/EmailUser.mjs'; 
+import EmailUser from '../shemas/EmailUser.mjs';
 import GoogleUser from '../shemas/GoogleUser.mjs'
 import bcrypt from 'bcrypt'; // Import bcrypt for password hashing
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import cors from "cors";
 dotenv.config();
 
@@ -73,7 +74,7 @@ router.post(
       res.status(200).json({
         message: 'User created successfully!',
         user: {
-          uid: req.session.userId,
+          uid: user.uid,
           email: user.email,
         },
       });
@@ -121,29 +122,51 @@ router.post('/sign-up-google', async (req, res) => {
 });
 
 // GET route for authentication status
-router.get('/auth/status', async (req, res) => {
-  console.log('Session data:', req.session);
+router.post('/auth/status', async (req, res) => {
+  const { uid, type } = req.body;
 
-  if (req.session.trySession) {
-    console.log('User authenticated:', {
-      userId: req.session.userId,
-      type: req.session.type,
+  if (!uid || !type) {
+    return res.status(400).send({
+      error: 'Both uid and type are required',
+      loggedIn: false
     });
+  }
 
-    return res.status(200).json({
-      loggedIn: true,
-      userId: req.session.userId,
-      type: req.session.type,
-    });
-  } else {
-    console.log('No active session found');
-    return res.status(401).json({
-      success: false,
-      message: 'No active session found',
+  try {
+    let user = null;
+
+    if (type === "email") {
+      user = await EmailUser.findOne({ uid: uid });
+    } else if (type === "google") {
+      user = await GoogleUser.findOne({ uid: uid });
+    } else {
+      return res.status(400).send({
+        error: 'Invalid type specified',
+        loggedIn: false
+      });
+    }
+
+    if (user) {
+      return res.status(200).send({
+        loggedIn: true,
+        userId: uid,
+        type: type,
+      });
+    } else {
+      return res.status(404).send({
+        loggedIn: false,
+        error: 'User not found'
+      });
+    }
+  } catch (err) {
+    console.error('Error checking auth status:', err);
+    return res.status(500).send({
+      error: 'Internal server error',
+      loggedIn: false,
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 });
-
 // POST route for login with Google
 router.post(
   '/login-google',
@@ -193,7 +216,13 @@ router.post(
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      return res.status(400).json({ 
+        success: false,
+        errors: errors.array().map(err => ({
+          field: err.param,
+          message: err.msg
+        })) 
+      });
     }
 
     const { email, password } = req.body;
@@ -202,38 +231,49 @@ router.post(
       // Find the user by email
       const user = await EmailUser.findOne({ email: email });
 
-      if (user) {
-        // Compare the provided password with the hashed password in the database
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-
-        if (isPasswordValid) {
-          // Set session data
-          req.session.trySession = true;
-          req.session.createdAt = new Date();
-          req.session.userId = user.uid;
-          req.session.type = user.type;
-
-          res.status(200).json({
-            message: 'User logged in successfully',
-            user: {
-              uid: user.uid,
-              email: user.email,
-            },
-          });
-        } else {
-          res.status(401).json({
-            message: 'Incorrect password',
-          });
-        }
-      } else {
-        res.status(404).json({
+      if (!user) {
+        return res.status(404).json({
+          success: false,
           message: 'User not found',
+          errorCode: 'USER_NOT_FOUND'
         });
       }
+
+      // Compare the provided password with the hashed password
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        return res.status(401).json({
+          success: false,
+          message: 'Incorrect password',
+          errorCode: 'INVALID_PASSWORD'
+        });
+      }
+
+      // Set session data
+      req.session.trySession = true;
+      req.session.createdAt = new Date();
+      req.session.userId = user.uid;
+      req.session.type = user.type;
+
+      // Successful login
+      return res.status(200).json({
+        success: true,
+        message: 'User logged in successfully',
+        user: {
+          uid: user.uid,
+          email: user.email,
+          type: user.type
+        }
+      });
+
     } catch (err) {
-      res.status(500).json({
+      console.error('Login error:', err);
+      return res.status(500).json({
         success: false,
-        message: 'Username or password incorrect',
+        message: 'An unexpected error occurred',
+        errorCode: 'SERVER_ERROR',
+        error: process.env.NODE_ENV === 'development' ? err.message : undefined
       });
     }
   }
